@@ -4,10 +4,26 @@
             <header><input type="text"></header>
             <section>
                 <ul>
-                    <li>1111111</li>
-                    <li>2222222</li>
-                    <li>33333</li>
-                    <li>44444</li>
+                    <li>
+                        <span class="finish">完成</span>
+                        <div>11111</div>
+                        <span class="delete">删除</span>
+                    </li>
+                    <li class="finished">
+                        <span class="finish">完成</span>
+                        <div>22222</div>
+                        <span class="delete">删除</span>
+                    </li>
+                    <li>
+                        <span class="finish">完成</span>
+                        <div>33333</div>
+                        <span class="delete">删除</span>
+                    </li>
+                    <li>
+                        <span class="finish">完成</span>
+                        <div>44444</div>
+                        <span class="delete">删除</span>
+                    </li>
                 </ul>
             </section>
         </div>
@@ -16,12 +32,27 @@
 
 <script>
 import $ from 'jquery';
+import Hammer from 'hammer';
 
 export default {
     name: 'app',
-    created() {
-        console.log(112233);
-        console.log($);
+    mounted() {
+        const li = $('li>div');
+        li.each((index, item) => {
+            this.addHandle(item);
+        });
+    },
+    methods: {
+        addHandle(item) {
+            let mc = new Hammer.Manager(item);
+            let Pan = new Hammer.Pan();
+
+            mc.add(Pan);
+            mc.on('panleft', function(e) {
+                $(item).css({'left': e.deltaX + 'px'});
+                console.log(e.deltaX);
+            });
+        }
     }
 };
 </script>
@@ -81,6 +112,7 @@ header {
 
 section {
     flex-grow:1;
+    overflow: hidden;
 
     ul {
         padding: 0;
@@ -91,7 +123,41 @@ section {
             height: 100px;
             line-height: 100px;
             font-size: 40px;
-            padding: 0 30px;
+            position: relative;
+            border-top: 1px solid #CCC; /*no*/
+
+            &:last-child {
+                border-top: 1px solid #CCC; /*no*/
+                border-bottom: 1px solid #CCC; /*no*/
+            }
+
+            &.finished div {
+                background-color:rgb(225, 245, 206);
+            }
+
+            span {
+                position: absolute;
+                top: 0;
+                
+                &.finish {
+                    left: 30px;
+                }
+
+                &.delete {
+                    right: 30px;
+                }
+            }
+
+            div {
+                position: absolute;
+                z-index: 1;
+                top: 0;
+                left: 0;
+                background-color: #fff;
+                padding: 0 30px;
+                width: 100%;
+                height: 100%;
+            }
         }
     }
 }

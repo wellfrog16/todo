@@ -26,7 +26,8 @@ module.exports = {
       : config.dev.assetsPublicPath
   },
   externals: {
-    'jquery': 'jQuery'
+    'jquery': 'jQuery',
+    'hammer': 'Hammer'
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],
