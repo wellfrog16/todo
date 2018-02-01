@@ -1,7 +1,7 @@
 <template>
     <div id="app">
         <div class="container">
-            <header><input type="text"></header>
+            <header><input type="text" placeholder="请输入待办事项"></header>
             <section>
                 <ul>
                     <li>
@@ -49,6 +49,9 @@ export default {
 
             mc.add(Pan);
             mc.on('panleft', function(e) {
+                // 删除按钮宽度
+                // const spanWidth = $(item).parent().find('span.delete').width();
+
                 $(item).css({'left': e.deltaX + 'px'});
                 console.log(e.deltaX);
             });
@@ -103,7 +106,6 @@ header {
         height: 100%;
         display: block;
         border: 0;
-        border-bottom: 1px solid #CCC;
         font-size: 40px;
         line-height: 40px;
         outline: none;
@@ -118,18 +120,18 @@ section {
         padding: 0;
         margin: 0;
         list-style: none;
+        border-top: 1px solid #CCC; /*no*/
+        border-bottom: 1px solid #CCC; /*no*/
+
+        li + li {
+            border-top: 1px solid #CCC; /*no*/
+        }
 
         li {
             height: 100px;
             line-height: 100px;
             font-size: 40px;
             position: relative;
-            border-top: 1px solid #CCC; /*no*/
-
-            &:last-child {
-                border-top: 1px solid #CCC; /*no*/
-                border-bottom: 1px solid #CCC; /*no*/
-            }
 
             &.finished div {
                 background-color:rgb(225, 245, 206);
@@ -138,13 +140,18 @@ section {
             span {
                 position: absolute;
                 top: 0;
+                height: 100%;
+                width: 140px;
+                text-align: center;
+                color: #FFF;
                 
                 &.finish {
                     left: 30px;
                 }
 
                 &.delete {
-                    right: 30px;
+                    right: 0px;
+                    background-color: #F56C6C;
                 }
             }
 
