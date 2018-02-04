@@ -4,10 +4,10 @@
             <header><input type="text" placeholder="请输入待办事项" v-model="todo" @keyup.enter="save()"></header>
             <section>
                 <ul>
-                    <li v-for="item in list" v-bind:key="item.id">
+                    <li v-for="item in list" v-bind:key="item.id" :class="{finished: item.finished}">
                         <span class="finish">完成</span>
                         <div>{{ item.todo }}</div>
-                        <span class="delete">删除</span>
+                        <span class="delete" @click="del(item)">删除</span>
                     </li>
                 </ul>
             </section>
@@ -28,89 +28,99 @@ export default {
         };
     },
     mounted() {
-        $('li>div').each((index, item) => this.addHandle(item));
+        $('li>div').each((index, el) => this.addHandle(el));
     },
     methods: {
         save() {
             if (!this.todo) { return; }
-            this.list.unshift({ todo: this.todo, id: new Date().getTime() });
+            this.list.unshift({ todo: this.todo, finished: false, id: new Date().getTime() });
             this.todo = '';
 
             this.$nextTick(() => this.addHandle($('li:first-child>div')[0]));
         },
-        addHandle(item) {
-            item.status = 0;    // 初始状态
+        del(item) {
+            this.list.splice(this.list.indexOf(item), 1);
+        },
+        finish(index) {
+            this.list[index].finished = true;
+        },
+        addHandle(el) {
+            el.status = 0;    // 初始状态
 
-            let mc = new Hammer.Manager(item);
+            let mc = new Hammer.Manager(el);
             let Pan = new Hammer.Pan({
                 threshold: 0,
                 direction: Hammer.DIRECTION_HORIZONTAL  // 仅水平方向
             });
 
-            const spanWidth = $(item).parent().find('span.delete').width();
-            let itemLeft = 0;
+            const spanWidth = $(el).parent().find('span.delete').width();
+            let elLeft = 0;
             let additionalEvent = '';
 
             mc.add(Pan);
-            mc.on('panstart', function(e) {
-                itemLeft = parseInt($(item).css('left'));
+            mc.on('panstart', (e) => {
+                elLeft = parseInt($(el).css('left'));
             });
-            mc.on('panmove', function(e) {
+            mc.on('panmove', (e) => {
                 additionalEvent = e.additionalEvent;
 
                 // 默认状态时，左滑，打开删除按钮
-                if (e.additionalEvent === 'panleft' && item.status === 0) {
-                    if (Math.abs(itemLeft + e.deltaX) >= spanWidth) { return; }
-                    $(item).css({'left': (itemLeft + e.deltaX) + 'px'});
+                if (e.additionalEvent === 'panleft' && [0, 2].indexOf(el.status) !== -1) {
+                    if (Math.abs(elLeft + e.deltaX) >= spanWidth) { return; }
+                    $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                 }
 
                 // 默认状态时，右滑，滑动到底完成，期间显示完成提示
-                if (e.additionalEvent === 'panright' && item.status === 0) {
-                    if (itemLeft + e.deltaX >= spanWidth) { return; }
-                    $(item).css({'left': (itemLeft + e.deltaX) + 'px'});
+                if (e.additionalEvent === 'panright' && el.status === 0) {
+                    if (elLeft + e.deltaX >= spanWidth) { return; }
+                    $(el).css({'left': (elLeft + e.deltaX) + 'px'});
+                    // console.log(`elleft:${elLeft}, deltaX:${e.deltaX}`);
                 }
 
                 // 状态1，删除按钮打开时，右滑，关闭删除按钮
-                if (e.additionalEvent === 'panright' && item.status === 1) {
-                    if (itemLeft + e.deltaX >= 0) { return; }
-                    $(item).css({'left': (itemLeft + e.deltaX) + 'px'});
+                if (e.additionalEvent === 'panright' && [1, 2].indexOf(el.status) !== -1) {
+                    if (elLeft + e.deltaX >= 0) { return; }
+                    $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                 }
             });
-            mc.on('panend', function(e) {
-                itemLeft = parseInt($(item).css('left'));
+            mc.on('panend', (e) => {
+                elLeft = parseInt($(el).css('left'));
 
-                console.log(item.status);
+                console.log(el.status);
 
                 // 默认状态，左滑结束时
-                if (item.status === 0 && additionalEvent === 'panleft') {
-                    if (itemLeft <= -10) {
-                        $(item).stop().animate({'left': -spanWidth + 'px'}, () => {
-                            item.status = 1;
+                if ([0, 2].indexOf(el.status) !== -1 && additionalEvent === 'panleft') {
+                    if (elLeft <= -10) {
+                        $(el).stop().animate({'left': -spanWidth + 'px'}, () => {
+                            el.status = 1;
                         });
                     } else {
-                        $(item).stop().animate({'left': '0px'});
+                        $(el).stop().animate({'left': '0px'});
                     }
                 }
 
                 // 删除按钮打开，右滑结束时
-                if (item.status === 1 && additionalEvent === 'panright') {
-                    if (spanWidth + itemLeft >= 10) {
-                        $(item).stop().animate({'left': '0px'}, () => {
-                            item.status = 0;
+                if ([1, 2].indexOf(el.status) !== -1 && additionalEvent === 'panright') {
+                    if (spanWidth + elLeft >= 10) {
+                        $(el).stop().animate({'left': '0px'}, () => {
+                            el.status = 0;
                         });
                     } else {
-                        $(item).stop().animate({'left': -spanWidth + 'px'});
+                        $(el).stop().animate({'left': -spanWidth + 'px'});
                     }
                 }
 
                 // 默认状态，右滑结束时，确认完成动作
-                if (item.status === 0 && additionalEvent === 'panright') {
-                    if (spanWidth - itemLeft >= 10) {
-                        $(item).stop().animate({'left': '0px'});
+                if (el.status === 0 && additionalEvent === 'panright') {
+                    if (spanWidth - elLeft >= 10) {
+                        $(el).stop().animate({'left': '0px'});
                     } else {
-                        $(item).stop().animate({'left': spanWidth + 'px'}, () => {
-                            item.status = 2;
-                            // todo 完成操作
+                        $(el).stop().animate({'left': spanWidth + 'px'}, () => {
+                            el.status = 2;
+                            this.finish($(el).parent().index());
+                            setTimeout(() => {
+                                $(el).stop().animate({'left': '0px'});
+                            }, 500);
                         });
                     }
                 }
@@ -121,6 +131,8 @@ export default {
 </script>
 
 <style lang="less">
+@import url('./assets/style/config.less');
+
 html, body {
     padding: 0;
     margin: 0;
@@ -141,7 +153,7 @@ body {
     width: 100%;
     height: 100%;
     padding: 50px;
-    background-color:cornflowerblue;
+    background-color:#111;
 }
 
 .container {
@@ -180,17 +192,25 @@ section {
         padding: 0;
         margin: 0;
         list-style: none;
-        border-top: 1px solid #CCC; /*no*/
+        border-top: 1px solid @color-border1; /*no*/
 
         li {
             height: 100px;
             line-height: 100px;
             font-size: 40px;
             position: relative;
-            border-bottom: 1px solid #CCC; /*no*/
+            border-bottom: 1px solid @color-border1; /*no*/
+            
 
             &.finished div {
-                background-color:rgb(225, 245, 206);
+                // background-color:rgb(225, 245, 206);
+                border-left: 5px solid @color-success; /*no*/
+                text-decoration: line-through;
+                color: @color-border1;
+            }
+
+            div {
+                border-left: 5px solid @color-border1; /*no*/
             }
 
             span {
@@ -203,12 +223,12 @@ section {
                 
                 &.finish {
                     left: 0px;
-                    background-color: #67C23A;
+                    background-color: @color-success;
                 }
 
                 &.delete {
                     right: 0px;
-                    background-color: #F56C6C;
+                    background-color: @color-danger;
                 }
             }
 
