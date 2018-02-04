@@ -46,6 +46,7 @@ export default {
         },
         addHandle(el) {
             el.status = 0;    // 初始状态
+            el.finished = false;
 
             let mc = new Hammer.Manager(el);
             let Pan = new Hammer.Pan({
@@ -64,21 +65,21 @@ export default {
             mc.on('panmove', (e) => {
                 additionalEvent = e.additionalEvent;
 
-                // 默认状态时，左滑，打开删除按钮
-                if (e.additionalEvent === 'panleft' && [0, 2].indexOf(el.status) !== -1) {
+                // 1、默认状态时，左滑，打开删除按钮
+                if (e.additionalEvent === 'panleft' && el.status === 0) {
                     if (Math.abs(elLeft + e.deltaX) >= spanWidth) { return; }
                     $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                 }
 
-                // 默认状态时，右滑，滑动到底完成，期间显示完成提示
-                if (e.additionalEvent === 'panright' && el.status === 0) {
+                // 2、默认状态时，非完成，右滑，滑动到底完成，期间显示完成提示
+                if (e.additionalEvent === 'panright' && el.status === 0 && !el.finished) {
                     if (elLeft + e.deltaX >= spanWidth) { return; }
                     $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                     // console.log(`elleft:${elLeft}, deltaX:${e.deltaX}`);
                 }
 
-                // 状态1，删除按钮打开时，右滑，关闭删除按钮
-                if (e.additionalEvent === 'panright' && [1, 2].indexOf(el.status) !== -1) {
+                // 3、删除按钮打开时，右滑，关闭删除按钮
+                if (e.additionalEvent === 'panright' && el.status === 1) {
                     if (elLeft + e.deltaX >= 0) { return; }
                     $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                 }
@@ -88,8 +89,8 @@ export default {
 
                 console.log(el.status);
 
-                // 默认状态，左滑结束时
-                if ([0, 2].indexOf(el.status) !== -1 && additionalEvent === 'panleft') {
+                // 1、默认状态，左滑结束时
+                if (el.status === 0 && additionalEvent === 'panleft') {
                     if (elLeft <= -10) {
                         $(el).stop().animate({'left': -spanWidth + 'px'}, () => {
                             el.status = 1;
@@ -99,8 +100,23 @@ export default {
                     }
                 }
 
-                // 删除按钮打开，右滑结束时
-                if ([1, 2].indexOf(el.status) !== -1 && additionalEvent === 'panright') {
+                // 2、默认状态，右滑结束时，确认完成动作
+                if (el.status === 0 && !el.finished && additionalEvent === 'panright') {
+                    if (spanWidth - elLeft >= 10) {
+                        $(el).stop().animate({'left': '0px'});
+                    } else {
+                        $(el).stop().animate({'left': spanWidth + 'px'}, () => {
+                            el.finished = true; // 设置完成
+                            this.finish($(el).parent().index());
+                            setTimeout(() => {
+                                $(el).stop().animate({'left': '0px'}, () => this.refresh());
+                            }, 500);
+                        });
+                    }
+                }
+
+                // 3、删除按钮打开，右滑结束时
+                if (el.status === 1 && additionalEvent === 'panright') {
                     if (spanWidth + elLeft >= 10) {
                         $(el).stop().animate({'left': '0px'}, () => {
                             el.status = 0;
@@ -109,22 +125,10 @@ export default {
                         $(el).stop().animate({'left': -spanWidth + 'px'});
                     }
                 }
-
-                // 默认状态，右滑结束时，确认完成动作
-                if (el.status === 0 && additionalEvent === 'panright') {
-                    if (spanWidth - elLeft >= 10) {
-                        $(el).stop().animate({'left': '0px'});
-                    } else {
-                        $(el).stop().animate({'left': spanWidth + 'px'}, () => {
-                            el.status = 2;
-                            this.finish($(el).parent().index());
-                            setTimeout(() => {
-                                $(el).stop().animate({'left': '0px'});
-                            }, 500);
-                        });
-                    }
-                }
             });
+        },
+        refresh() {
+            this.list.sort((a, b) => a.finished !== b.finished ? a.finished : a.id < b.id);
         }
     }
 };
