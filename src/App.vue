@@ -125,6 +125,10 @@ export default {
                         $(el).stop().animate({'left': -spanWidth + 'px'});
                     }
                 }
+
+                if (['panup', 'pandown'].indexOf(additionalEvent) !== -1) {
+                    $(el).stop().animate({'left': '0px'});
+                }
             });
         },
         refresh() {
