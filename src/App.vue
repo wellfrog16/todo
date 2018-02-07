@@ -89,8 +89,7 @@ export default {
             let Tap = new Hammer.Tap();
 
             mc.add(Tap);
-            // mc.on('tap', (e) => this.remove($(el).parent().index()));
-            mc.on('tap', (e) => this.removeFinished());
+            mc.on('tap', (e) => this.remove($(el).parent().index()));
 
             mc = new Hammer.Manager(el);
             let Pan = new Hammer.Pan({

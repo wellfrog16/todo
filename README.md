@@ -1,6 +1,6 @@
 # todo
 
-> A Vue.js project
+> 极简todo
 
 ## Build Setup
 
