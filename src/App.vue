@@ -141,7 +141,7 @@ export default {
             mc.on('panend', (e) => {
                 elLeft = parseInt($(el).css('left'));
 
-                console.log(el.status);
+                // console.log(el.status);
 
                 // 1、默认状态，左滑结束时
                 if (el.status === 0 && additionalEvent === 'panleft') {
