@@ -8,7 +8,7 @@
                     <li v-for="item in list" v-bind:key="item.id" :class="{finished: item.finished}">
                         <span class="finish">完成</span>
                         <div>{{ item.todo }}</div>
-                        <span class="delete" @click="del(item)">删除</span>
+                        <span class="delete">删除</span>
                     </li>
                 </ul>
                 </div>
@@ -21,6 +21,7 @@
 import $ from 'jquery';
 import Hammer from 'hammer';
 import IScroll from 'iscroll';
+import Shake from 'shake.js';
 
 let myScroll = null;
 
@@ -28,6 +29,7 @@ export default {
     name: 'app',
     data() {
         return {
+            currentEl: null,
             todo: '',
             list: []
         };
@@ -37,18 +39,20 @@ export default {
     },
     mounted() {
         // 禁止拉动
-        $('body').on('touchmove', (e) => {
-            e.preventDefault();
-        });
+        $('body').on('touchmove', e => e.preventDefault());
 
-        // $('body').on('touchstart', (e) => {
-        //     e.preventDefault();
-        // });
-
+        // 事件绑定
         $('li>div').each((index, el) => this.addHandle(el));
 
         // 滚动条
         myScroll = new IScroll('section', {scrollbars: false});
+
+        // 抖动事件
+        new Shake({
+            threshold: 15, // optional shake strength threshold
+            timeout: 1000 // optional, determines the frequency of event generation
+        }).start();
+        window.addEventListener('shake', () => this.removeFinished(), false);
     },
     methods: {
         save() {
@@ -59,9 +63,19 @@ export default {
 
             this.$nextTick(() => this.addHandle($('li:first-child>div')[0]));
         },
-        del(item) {
+        remove(index) {
+            const item = this.list[index];
             this.list.splice(this.list.indexOf(item), 1);
             this.saveStorage();
+        },
+        removeFinished() {
+            for (const item of this.list) {
+                if (item.finished) {
+                    this.list.splice(this.list.indexOf(item), this.list.length);
+                    this.saveStorage();
+                    return;
+                }
+            }
         },
         finish(index) {
             this.list[index].finished = true;
@@ -71,7 +85,14 @@ export default {
             el.status = 0;    // 初始状态
             el.finished = false;
 
-            let mc = new Hammer.Manager(el);
+            let mc = new Hammer.Manager($(el).parent().find('span.delete')[0]);
+            let Tap = new Hammer.Tap();
+
+            mc.add(Tap);
+            // mc.on('tap', (e) => this.remove($(el).parent().index()));
+            mc.on('tap', (e) => this.removeFinished());
+
+            mc = new Hammer.Manager(el);
             let Pan = new Hammer.Pan({
                 threshold: 0,
                 direction: Hammer.DIRECTION_HORIZONTAL  // 仅水平方向
@@ -83,6 +104,16 @@ export default {
 
             mc.add(Pan);
             mc.on('panstart', (e) => {
+                if (!this.currentEl) {
+                    this.currentEl = el;    // 设置当前el，用于复位
+                } else {
+                    if (this.currentEl !== el) {
+                        $(this.currentEl).stop().animate({'left': '0px'}, () => {
+                            this.currentEl.status = 0;
+                            this.currentEl = el;
+                        });
+                    }
+                }
                 elLeft = parseInt($(el).css('left'));
             });
             mc.on('panmove', (e) => {
@@ -96,7 +127,7 @@ export default {
 
                 // 2、默认状态时，非完成，右滑，滑动到底完成，期间显示完成提示
                 if (e.additionalEvent === 'panright' && el.status === 0 && !el.finished) {
-                    if (elLeft + e.deltaX >= spanWidth) { return; }
+                    if (elLeft + e.deltaX >= spanWidth) { $(el).css({'left': (spanWidth - 5) + 'px'}); return; }
                     $(el).css({'left': (elLeft + e.deltaX) + 'px'});
                     // console.log(`elleft:${elLeft}, deltaX:${e.deltaX}`);
                 }
@@ -143,6 +174,7 @@ export default {
                     if (spanWidth + elLeft >= 10) {
                         $(el).stop().animate({'left': '0px'}, () => {
                             el.status = 0;
+                            this.currentEl = null;
                         });
                     } else {
                         $(el).stop().animate({'left': -spanWidth + 'px'});
@@ -152,6 +184,10 @@ export default {
                 if (['panup', 'pandown'].indexOf(additionalEvent) !== -1) {
                     $(el).stop().animate({'left': '0px'});
                 }
+            });
+
+            mc.on('pancancel', (e) => {
+                console.log(e);
             });
         },
         refresh() {
@@ -198,7 +234,7 @@ body {
 #app {
     width: 100%;
     height: 100%;
-    padding: 50px;
+    padding: 10px;
     background-color:#111;
 }
 
