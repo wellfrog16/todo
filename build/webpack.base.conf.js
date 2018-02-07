@@ -27,7 +27,8 @@ module.exports = {
   },
   externals: {
     'jquery': 'jQuery',
-    'hammer': 'Hammer'
+    'hammer': 'Hammer',
+    'iscroll': 'IScroll'
   },
   resolve: {
     extensions: ['.js', '.vue', '.json'],

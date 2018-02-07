@@ -3,6 +3,7 @@
         <div class="container">
             <header><input type="text" placeholder="请输入待办事项" v-model="todo" @keyup.enter="save()"></header>
             <section>
+                <div>
                 <ul>
                     <li v-for="item in list" v-bind:key="item.id" :class="{finished: item.finished}">
                         <span class="finish">完成</span>
@@ -10,6 +11,7 @@
                         <span class="delete" @click="del(item)">删除</span>
                     </li>
                 </ul>
+                </div>
             </section>
         </div>
     </div>
@@ -18,6 +20,9 @@
 <script>
 import $ from 'jquery';
 import Hammer from 'hammer';
+import IScroll from 'iscroll';
+
+let myScroll = null;
 
 export default {
     name: 'app',
@@ -27,22 +32,40 @@ export default {
             list: []
         };
     },
+    created() {
+        this.readStorage();
+    },
     mounted() {
+        // 禁止拉动
+        $('body').on('touchmove', (e) => {
+            e.preventDefault();
+        });
+
+        // $('body').on('touchstart', (e) => {
+        //     e.preventDefault();
+        // });
+
         $('li>div').each((index, el) => this.addHandle(el));
+
+        // 滚动条
+        myScroll = new IScroll('section', {scrollbars: false});
     },
     methods: {
         save() {
             if (!this.todo) { return; }
             this.list.unshift({ todo: this.todo, finished: false, id: new Date().getTime() });
+            this.saveStorage();
             this.todo = '';
 
             this.$nextTick(() => this.addHandle($('li:first-child>div')[0]));
         },
         del(item) {
             this.list.splice(this.list.indexOf(item), 1);
+            this.saveStorage();
         },
         finish(index) {
             this.list[index].finished = true;
+            this.saveStorage();
         },
         addHandle(el) {
             el.status = 0;    // 初始状态
@@ -132,7 +155,22 @@ export default {
             });
         },
         refresh() {
-            this.list.sort((a, b) => a.finished !== b.finished ? a.finished : a.id < b.id);
+            // this.list.sort((a, b) => a.finished !== b.finished ? a.finished : a.id < b.id);
+            this.list.sort((a, b) => {
+                if (a.finished !== b.finished) {
+                    return a.finished ? 1 : -1;
+                } else {
+                    return a.id < b.id ? 1 : -1;
+                }
+            });
+            this.saveStorage();
+        },
+        saveStorage() {
+            localStorage.list = JSON.stringify(this.list);
+            this.$nextTick(() => myScroll.refresh());
+        },
+        readStorage() {
+            if (localStorage.list) { this.list = JSON.parse(localStorage.list); this.$nextTick(() => myScroll.refresh()); }
         }
     }
 };
@@ -169,13 +207,21 @@ body {
     background-color: #fff;
     border-radius: 10px;
     // opacity: 0.5;
-    display: flex;
-    flex-direction: column;
+    // display: flex;
+    // flex-direction: column;
     // align-items: 
+    padding-top: 110px;
+    padding-bottom: 10px;
+    position: relative;
 }
 
 header {
-    flex-grow:0;
+    // flex-grow:0;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 110px;
     padding: 30px;
     display: flex;
     flex-direction: column;
@@ -183,18 +229,23 @@ header {
 
     input {
         width: 100%;
-        height: 100%;
+        height: 50px;
         display: block;
         border: 0;
+        padding: 0;
         font-size: 40px;
-        line-height: 40px;
+        line-height: 50px;
         outline: none;
     }
 }
 
 section {
-    flex-grow:1;
+    // flex-grow:1;
+    height: 100%;
     overflow: hidden;
+
+    >div {
+    }
 
     ul {
         padding: 0;
