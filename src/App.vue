@@ -4,13 +4,13 @@
             <header><input type="text" placeholder="请输入待办事项" v-model="todo" @keyup.enter="save()"></header>
             <section>
                 <div>
-                <ul>
-                    <li v-for="item in list" v-bind:key="item.id" :class="{finished: item.finished}">
+                <transition-group name="list-complete" tag="ul">
+                    <li v-for="item in list" v-bind:key="item.id" class="list-complete-item" :class="{finished: item.finished}">
                         <span class="finish">完成</span>
                         <div>{{ item.todo }}</div>
                         <span class="delete">删除</span>
                     </li>
-                </ul>
+                </transition-group>
                 </div>
             </section>
         </div>
@@ -279,9 +279,6 @@ section {
     height: 100%;
     overflow: hidden;
 
-    >div {
-    }
-
     ul {
         padding: 0;
         margin: 0;
@@ -337,6 +334,22 @@ section {
                 height: 100%;
             }
         }
+    }
+}
+
+
+.list-complete-item {
+    transition: all 1s;
+}
+.list-complete-enter, .list-complete-leave-to
+/* .list-complete-leave-active for below version 2.1.8 */ {
+    opacity: 0;
+}
+.list-complete-leave-active {
+    position: absolute;
+
+    .finish {
+        opacity: 0;
     }
 }
 
