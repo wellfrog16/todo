@@ -107,7 +107,7 @@ export default {
                     this.currentEl = el;    // 设置当前el，用于复位
                 } else {
                     if (this.currentEl !== el) {
-                        $(this.currentEl).stop().animate({'left': '0px'}, () => {
+                        $(this.currentEl).animate({'left': '0px'}, () => {
                             this.currentEl.status = 0;
                             this.currentEl = el;
                         });
@@ -145,24 +145,24 @@ export default {
                 // 1、默认状态，左滑结束时
                 if (el.status === 0 && additionalEvent === 'panleft') {
                     if (elLeft <= -10) {
-                        $(el).stop().animate({'left': -spanWidth + 'px'}, () => {
+                        $(el).animate({'left': -spanWidth + 'px'}, () => {
                             el.status = 1;
                         });
                     } else {
-                        $(el).stop().animate({'left': '0px'});
+                        $(el).animate({'left': '0px'});
                     }
                 }
 
                 // 2、默认状态，右滑结束时，确认完成动作
                 if (el.status === 0 && !el.finished && additionalEvent === 'panright') {
                     if (spanWidth - elLeft >= 10) {
-                        $(el).stop().animate({'left': '0px'});
+                        $(el).animate({'left': '0px'});
                     } else {
-                        $(el).stop().animate({'left': spanWidth + 'px'}, () => {
+                        $(el).animate({'left': spanWidth + 'px'}, () => {
                             el.finished = true; // 设置完成
                             this.finish($(el).parent().index());
                             setTimeout(() => {
-                                $(el).stop().animate({'left': '0px'}, () => this.refresh());
+                                $(el).animate({'left': '0px'}, () => this.refresh());
                             }, 500);
                         });
                     }
@@ -171,17 +171,17 @@ export default {
                 // 3、删除按钮打开，右滑结束时
                 if (el.status === 1 && additionalEvent === 'panright') {
                     if (spanWidth + elLeft >= 10) {
-                        $(el).stop().animate({'left': '0px'}, () => {
+                        $(el).animate({'left': '0px'}, () => {
                             el.status = 0;
                             this.currentEl = null;
                         });
                     } else {
-                        $(el).stop().animate({'left': -spanWidth + 'px'});
+                        $(el).animate({'left': -spanWidth + 'px'});
                     }
                 }
 
                 if (['panup', 'pandown'].indexOf(additionalEvent) !== -1) {
-                    $(el).stop().animate({'left': '0px'});
+                    $(el).animate({'left': '0px'});
                 }
             });
 

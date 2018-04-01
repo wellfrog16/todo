@@ -26,7 +26,7 @@ module.exports = {
       : config.dev.assetsPublicPath
   },
   externals: {
-    'jquery': 'jQuery',
+    'jquery': 'Zepto',
     'hammer': 'Hammer',
     'iscroll': 'IScroll'
   },
